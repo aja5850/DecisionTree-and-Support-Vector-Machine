@@ -1,0 +1,179 @@
+#Task 1
+#******************************************************************************
+# Import necessary libraries
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+from sklearn import tree
+from sklearn.metrics import accuracy_score
+
+from IPython.core.pylabtools import figsize
+from sklearn.metrics import confusion_matrix, classification_report
+
+#******************************************************************************
+
+# Reading data into the pandas DataFrame, from a csv file;
+# it assumes that the first row is labels;
+
+df = pd.read_csv('/Users/aj/Downloads/CarDataM.csv')
+df.head()
+
+#***********************************
+# Display some stuff
+# The following command displays all columns
+pd.set_option('display.expand_frame_repr', False)
+
+# The following commands display information on the dataframe
+print(df.info())
+print("\n")
+
+print(df["class"].value_counts())
+
+#***********************************
+# Perform visualization
+# Create a bar plot for the target variable
+plt.figure(0)
+class_v_safety = sns.countplot(data=df, x="class", hue = "safety", palette="husl")
+plt.title("Safety vs. Class", color="#B5338A", fontsize=15)
+plt.show()
+
+plt.figure(0)
+class_v_safety = sns.countplot(data=df, x="class", hue = "lug_boot", palette="husl")
+plt.title("lug_boot vs. Class", color="#B5338A", fontsize=15)
+plt.show()
+
+plt.figure(0)
+class_v_safety = sns.countplot(data=df, x="class", hue = "persons", palette="husl")
+plt.title("persons vs. Class", color="#B5338A", fontsize=15)
+plt.show()
+
+plt.figure(0)
+class_v_safety = sns.countplot(data=df, x="class", hue = "doors", palette="husl")
+plt.title("doors vs. Class", color="#B5338A", fontsize=15)
+plt.show()
+
+plt.figure(0)
+class_v_safety = sns.countplot(data=df, x="class", hue = "Maint", palette="husl")
+plt.title("Maint vs. Class", color="#B5338A", fontsize=15)
+plt.show()
+
+plt.figure(0)
+class_v_safety = sns.countplot(data=df, x="class", hue = "Buying", palette="husl")
+plt.title("Buying vs. Class", color="#B5338A", fontsize=15)
+plt.show()
+
+#***********************************
+figsize(7,7)
+
+
+#***********************************
+# Map categorical values to numeric for class
+df["class"] = df["class"].map({"unacc": 0, "acc": 1, "good":2})
+
+# Map categorical values to numeric for safety
+df["safety"] = df["safety"].map({"low": 0, "med": 1, "high":2})
+
+# Map categorical values to numeric for lug_boot
+df["lug_boot"] = df["lug_boot"].map({"small": 0, "med": 1, "big":2})
+
+# Map categorical values to numeric for persons
+df["persons"] = df["persons"].map({"2": 0, "4": 1, "more":2})
+
+# Map categorical values to numeric for doors
+df["doors"] = df["doors"].map({"2": 0, "3": 1, "4":2, "5more":3})
+
+# Map categorical values to numeric for Maint
+df["Maint"] = df["Maint"].map({"low": 0, "med": 1, "high":2, "vhigh":3})
+\
+# Map categorical values to numeric for Buying
+df["Buying"] = df["Buying"].map({"low": 0, "med": 1, "high":2, "vhigh":3})
+
+#***********************************
+# Split data into training set and test set
+X = df.iloc[:, :-1]  # Features
+y = df.iloc[:, -1]   # Labels
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+max_depth = (1, 100)
+
+accuracies = []
+
+for depth in max_depth:
+
+    cf = tree.DecisionTreeClassifier(criterion="entropy", max_depth = depth, random_state = 42)
+    cf.fit(X_train, y_train)
+    y_pred = cf.predict(X_test)
+    
+    accuracy = accuracy_score(y_test, y_pred)
+    accuracies.append(accuracy)
+    print(f"Depth: {depth}, Accuracy: {accuracy}")
+    
+
+# Plot the results
+plt.plot(max_depth, accuracies, marker='o')
+plt.title('Classifier Accuracy vs Tree Depth')
+plt.xlabel('Tree Depth')
+plt.ylabel('Accuracy')
+plt.grid(True)
+plt.show()
+
+conf_matrix = confusion_matrix(y_test, y_pred)
+classification_rep = classification_report(y_test, y_pred)
+
+print("Confusion Matrix:")
+print(conf_matrix)
+print("\nClassification Report:")
+print(classification_rep)
+
+#******************************************
+#Task 2
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.preprocessing import StandardScaler
+
+# Load the dataset
+df = pd.read_csv('/Users/loganeisenberg/Downloads/breast-cancer-wisconsin.csv')
+
+# Drop the 'Sample Id' column as it's just an identifier
+df.drop('Sample Id', axis=1, inplace=True)
+
+# Replace non-numeric values in 'Bare Nuclei' and convert it to numeric
+df['Bare Nuclei'].replace('?', np.nan, inplace=True)
+df.dropna(subset=['Bare Nuclei'], inplace=True)
+df['Bare Nuclei'] = df['Bare Nuclei'].astype(int)
+
+# Data visualization with pairplot 
+selected_features = ['Clump Thickness', 'Cell Size Uniformity', 'Cell Shape Uniformity', 'Marginal Adhesion', 'Single Epithelial Cell Size', 'Bare Nuclei', 'Bland Chromatin', 'Normal Nucleoli', 'Mitoses', 'Class']
+sns.pairplot(df, hue='Class', vars=selected_features)
+plt.show()
+
+# Data preprocessing
+X = df.drop('Class', axis=1)
+y = df['Class']
+
+# Splitting the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Feature Scaling
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Training the SVM classifier
+svm_model = SVC(kernel='linear')
+svm_model.fit(X_train, y_train)
+
+# Assessing the accuracy of the classifier
+y_pred = svm_model.predict(X_test)
+
+# Confusion Matrix and Classification Report
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
